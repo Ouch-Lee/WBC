@@ -1,14 +1,12 @@
-#VRML_SIM R2020a utf8
+#VRML_SIM R2021a utf8
 WorldInfo {
-  gravity 0 0 -9.81
   CFM 1e-07
   ERP 0.8
   basicTimeStep 1
-  northDirection 0 1 0
   contactProperties [
     ContactProperties {
       coulombFriction [
-        0.5
+        0.9
       ]
       bounce 0.3
       bounceVelocity 0.003
@@ -649,6 +647,6 @@ Robot {
     }
   ]
   name "Diamod2D_Platform"
-  controller "wbc_alpha_mario2d"
+  controller "wbc_mario2d_SI"
   supervisor TRUE
 }

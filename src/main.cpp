@@ -67,14 +67,14 @@ bool runWebots(bool inLogFlag){
     // new controller
     // do not modiy below
     newController newCtrl(1);
-    newCtrl.setDebugFlag(1);
-    newCtrl.setActuatorModeFlag(0);
+    newCtrl.setDebugFlag(1); // simulation
+    newCtrl.setActuatorModeFlag(0); // actuator in Torque-Mode
     newCtrl.setInitFlag(0);
-    newCtrl.setBehaviorFlag(3);
+    newCtrl.setBehaviorFlag(3); // walking
     // do not modiy up
 
     // Setting. Here, you can modiy
-    newCtrl.setVelHgtCmdFlag(1);
+    newCtrl.setVelHgtCmdFlag(1);    // see "robotMessage.h"
     newCtrl.setVelFlag(1);      // 0: CoM; 1: Upper Body
     // Setting
 

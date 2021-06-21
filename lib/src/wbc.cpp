@@ -20,6 +20,10 @@ Wbc::Wbc(int dimVar, RobotDynamics * roDy){
     priorityConstraintNames.clear();
 }
 
+Wbc::Wbc(const Wbc & wbc_foo){
+    copyFromWbc(wbc_foo);
+}
+
 bool Wbc::addTask(Task * const taskPtr, int priority, bool mandatory){
     if (taskPtr == nullptr){
         std::cout << "the pointer of Task can not be NULL." << std::endl;
@@ -253,6 +257,29 @@ bool Wbc::getDimension(int &varDim, int &objDim, int &conDim) const{
     varDim = nV;
     objDim = nO;
     conDim = nC;
+    return true;
+}
+
+bool Wbc::getRobotPointer(RobotDynamics *robot_wbc) const{
+    robot_wbc = robot;
+    return true;
+}
+
+bool Wbc::getContainers(std::unordered_map<std::string, Task *> &tasks_wbc,
+                        std::unordered_map<std::string, Constraint *> &constraints_wbc,
+                        std::vector<std::vector<std::string> > &priorityTaskNames_wbc,
+                        std::vector<std::vector<std::string> > &priorityConstraintNames_wbc) const{
+    tasks_wbc = tasks;
+    constraints_wbc = constraints;
+    priorityTaskNames_wbc = priorityTaskNames;
+    priorityConstraintNames_wbc = priorityConstraintNames;
+    return true;
+}
+
+bool Wbc::copyFromWbc(const Wbc &wbc_foo){
+    wbc_foo.getContainers(tasks, constraints, priorityTaskNames, priorityConstraintNames);
+    wbc_foo.getDimension(nV, nO, nC);
+    wbc_foo.getRobotPointer(robot);
     return true;
 }
 

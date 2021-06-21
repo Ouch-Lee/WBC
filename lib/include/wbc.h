@@ -38,6 +38,12 @@ public:
      */
     Wbc(int dimVar, RobotDynamics * roDy);
 
+    /**
+     * @brief Copy constructor of Wbc
+     * @param wbc_foo the wbc instance to be copied from
+     */
+    Wbc(const Wbc &wbc_foo);
+
     // ================================================== virtual funcions ====================================================
 
     virtual ~Wbc() = default;
@@ -150,6 +156,33 @@ public:
      * @return
      */
     virtual bool getDimension(int & varDim, int & objDim, int & conDim) const;
+
+    /**
+     * @brief get the Pointer of RobotDynamics, i.e. the control object of WBC problem
+     * @param robot_wbc the variable to be assigned
+     * @return
+     */
+    virtual bool getRobotPointer(RobotDynamics * robot_wbc) const;
+
+    /**
+     * @brief get the main containers of class WBC
+     * @param tasks_wbc dictionary of tasks
+     * @param constraints_wbc dictionary of constraints
+     * @param priorityTaskNames_wbc Two-dimensional table of task priority
+     * @param priorityConstraintNames_wbc Two-dimensional table of constraints priority
+     * @return
+     */
+    virtual bool getContainers(std::unordered_map<std::string, Task *> & tasks_wbc,
+                               std::unordered_map<std::string, Constraint *> & constraints_wbc,
+                               std::vector<std::vector<std::string>> & priorityTaskNames_wbc,
+                               std::vector<std::vector<std::string>> & priorityConstraintNames_wbc) const;
+
+    /**
+     * @brief copy from another wbc
+     * @param wbc_foo the wbc instance to be copied from
+     * @return
+     */
+    virtual bool copyFromWbc(const Wbc & wbc_foo);
 
     /**
      * @brief Display WBC Information

@@ -99,7 +99,7 @@ bool taskControl::setParameters(const robotStateMachine &_rsm){
         stdVec_kd_cPfDDot_R = {80/m_leg, 80/m_leg};
         stdVec_kp_cPfDDot_L = {2400/m_leg, 2400/m_leg};
         stdVec_kd_cPfDDot_L = {80/m_leg, 80/m_leg};
-    }else{      // control UpperBody
+    }else{                          // control UpperBody
         // the PD of pitch
         kp_pitch = 1*624/Iy_ub;
         kd_pitch = 1*18.2/Iy_ub;

@@ -30,6 +30,12 @@ public:
      */
     WqpWbc(int dimVar, RobotDynamics * roDy);
 
+    /**
+     * @brief Copy constructor of WqpWbc
+     * @param wbc_foo the wbc instance to be copied from
+     */
+    WqpWbc(const Wbc &wbc_foo);
+
     // ---------------------- rewrite virtual functions ------------------------
 
     ~WqpWbc();

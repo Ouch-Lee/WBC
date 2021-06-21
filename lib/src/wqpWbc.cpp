@@ -16,6 +16,11 @@ WqpWbc::WqpWbc(int dimVar, RobotDynamics * roDy):Wbc(dimVar, roDy){
     resizeQPMatrixVector();
 }
 
+WqpWbc::WqpWbc(const Wbc & wbc_foo):Wbc(wbc_foo){
+    createNewQP();
+    resizeQPMatrixVector();
+}
+
 // ---------------------- rewrite virtual functions ------------------------
 
 WqpWbc::~WqpWbc(){
