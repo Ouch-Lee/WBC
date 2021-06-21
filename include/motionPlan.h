@@ -28,16 +28,6 @@ public:
     // walk planning Upper Body
     bool walkTrajectoryPlan_Ub(const robotStateMachine & _rsm, const robotState & _rs, robotDesired & _rd);
 
-    // hold in air plan
-    bool holdInAirPlan(const robotStateMachine & _rsm, const robotState & _rs, robotDesired & _rd);
-    // stand up plan
-    bool standUpPlan(const robotStateMachine & _rsm, const robotState & _rs, robotDesired & _rd);
-
-    // stand balance plan Center of Mass
-    bool standBalancePlan(const robotStateMachine & _rsm, const robotState & _rs, robotDesired & _rd);
-    // stand balance plan Upper Body
-    bool standBalancePlan_Ub(const robotStateMachine & _rsm, const robotState & _rs, robotDesired & _rd);
-
 private:
 
     // ------------------------ stand up plan -------------------------------

@@ -31,15 +31,6 @@ public:
 
     bool walkCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
 
-    bool standBalanceCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
-
-    bool holdCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
-    bool standUpCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
-
-    bool stopCtrl();
-    bool testCtrl();
-    bool squatCtrl();
-
 
 private:
 
@@ -48,16 +39,6 @@ private:
 
     // fk, ik, jac of leg
     DiaKine::DiamondLeg2D * dl2D;
-
-    // for real robot, joint torque-offset
-    Eigen::Vector2d xz_nominal = Eigen::Vector2d{0., -0.44};
-    Eigen::Matrix2d Jaco_nominalPose;                               // Jacobian matrix of xz = [0, -0.44]m , q_ik = [2.68, 3.6032]rad
-    // cartesian level
-    Eigen::Vector2d force_R_offset = Eigen::Vector2d{-5., -10.};    // [-5, -9]
-    Eigen::Vector2d force_L_offset = Eigen::Vector2d{3., -3.};       // [3, 0]
-    // joint level
-    Eigen::Vector2d tau_R_offset = Eigen::Vector2d::Zero();
-    Eigen::Vector2d tau_L_offset = Eigen::Vector2d::Zero();
 
     int nJg{11};            // dimension of Generalized Coordinates, 11
     int nJf{3};             // dimension of floating-base Joints, 3

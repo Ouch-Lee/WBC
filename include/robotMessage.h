@@ -55,25 +55,42 @@ struct PidParam {
 
 struct robotStateMachine
 {
+
+    /**
+     *  velHgtCmd_flag, in walking:
+     *      0: filter specified velocity value, no height-changing, just for testing
+     *      1: built-in steps-drived Velocity Tracking (Demo), no height-changing
+     *      2: Remoter send 'Vx_cmd' for Push Recovery (Demo)
+     *      5: Remoter send 'Vx_cmd' & 'H_flag_cmd'
+     */
+    int velHgtCmd_flag{1};
+
+    /**
+     *  vel_flag, in walking:
+     *      0: v_est = cDot_Com_S;
+     *      1: v_est = cDot_U_S;
+     */
+    int vel_flag{1};
+
+
+
+    // ========================================= DO NOT MODIFY BELOW ====================================
+
     /**
      *  behavior_flag: old-ctrlStatus:
      *      0: hold in air ( both legs keep the ZERO state ) ;
      *      1: try to Stand-up in place ( in preparation for subsequent case : "walking" and "test in air" ) ;
      *      2: test in air ( both legs are always in swing phase ) ;
      *      3: walking ;
-     *      4: try to Stop (slowly stand) in place ;
-     *      5: test squat in 1D ( need fixed mounts to make sure 1D : only be free in 'Z' );
      *  set value by calling 'setBehaviorFlag(int)'
      */
     int behavior_flag{0};
+
 
     /**
      *  actuatorMode_flag :
      *      0: stanceLeg in Torque-Mode, swingLeg in Torque-Mode
      *      1: stanceLeg in Torque-Mode, swingLeg in PVT-PID-Mode
-     *      2: stanceLeg in PVT-PID-Mode, swingLeg in PVT-PID-Mode  ----->  not tune well!
-     *      3: stanceLeg in PV-PID-Mode(T=0), swingLeg in PV-PID-Mode(T=0), for "test-in-air PV-mode"
-     *      4: stanceLeg in Torque-Mode, swingLeg in VT-D-Mode
      *  set value by calling 'setActuatorModeFlag(int)'
      */
     int actuatorMode_flag{0};
@@ -105,16 +122,6 @@ struct robotStateMachine
      */
     int massRatio_flag{0};
 
-    /**
-     *  velHgtCmd_flag, in walking:
-     *      0: filter specified velocity value, no height-changing, just for testing
-     *      1: built-in steps-drived Velocity Tracking (Demo), no height-changing
-     *      2: Remoter send 'Vx_cmd' for Push Recovery (Demo)
-     *      3: built-in steps-drived Velocity + Height Tracking
-     *      4: built-in steps-drived Mario-Squat-Rise (Demo), use 'H_flag_cmd' from Remoter
-     *      5: Remoter send 'Vx_cmd' & 'H_flag_cmd'
-     */
-    int velHgtCmd_flag{2};
 
     /**
      *  rom_flag : the ROM (Reduced Order Model) which prediction choose
@@ -123,13 +130,6 @@ struct robotStateMachine
      *      2: base on '0', and modify the kv_v, kp_v with the real Robot situation (filter, model error, and so on ...);       better ~
      */
     int rom_flag{2};
-
-    /**
-     *  vel_flag, in walking:
-     *      0: v_est = cDot_Com_S;  not tune well !!!
-     *      1: v_est = cDot_U_S;
-     */
-    int vel_flag{1};    // 1 is better
 
     /**
      *  velTrk_flag, in walking:
@@ -167,14 +167,14 @@ struct robotStateMachine
      *      0: not debug, the Real-Robot case;
      *      1: debug mode, use force-sensor to estimate GRF, in simulation;
      */
-    int debug_flag{0};
+    int debug_flag{1};
 
     /**
      *  circular_flag : state estimation for circular motion in 2D
      *      0 : like simulation, no circular motion;
      *      1 : deal with the circular motion error;         essential ~
      */
-    int circular_flag{1};
+    int circular_flag{0};
 
     //* ------------------------------------------------------------------------------------------*//
 

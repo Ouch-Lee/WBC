@@ -27,16 +27,13 @@ public:
     bool init();    // only call init() one time
     bool setBehaviorFlag(int behaviorFlag);
     bool setVelHgtCmdFlag(int velHgtCmdFlag);
+    bool setVelFlag(int velFlag);
     bool setActuatorModeFlag(int actuatorModeFlag);
     bool setVelTrkFlag(int velTrkFlag);
     bool setStandUpFlag(int standUpFlag);
     bool setInitFlag(int initialFlag);
     bool setStandParams(double Hn_stand, double time_interpolating, double time_total);
     bool setDebugFlag(int debugFlag);
-
-    // call update() every loop
-    bool update(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                const double * j_pos, const double * j_vel, const double * j_tor);
 
     int getNumLogData();
     bool getLogData(double* logData);                   // write userOut to double[] --- C-style array
@@ -64,21 +61,6 @@ private:
 
     // ============================== private functions ============================================
 
-    bool holdInAir(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                   const double * j_pos, const double * j_vel, const double * j_tor);
-    bool testInAir(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                   const double * j_pos, const double * j_vel, const double * j_tor);
-    bool tryStandUp(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                  const double * j_pos, const double * j_vel, const double * j_tor);
-    bool walking(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                 const double * j_pos, const double * j_vel, const double * j_tor);
-    bool tryStop(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                 const double * j_pos, const double * j_vel, const double * j_tor);
-    bool testSquat(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                   const double * j_pos, const double * j_vel, const double * j_tor);
-    bool standBalance(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                        const double * j_pos, const double * j_vel, const double * j_tor);
-
     bool initTimer();
     bool reConfigCtrlParams();  // base on 'actuatorMode_flag'
 
@@ -90,11 +72,7 @@ private:
     /*
      *  for simulation : use sensor "GRF" to estimate "s_st" & "s_sw"
      */
-    bool tryStandUp(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                        const double * j_pos, const double * j_vel, const double * j_tor, const double * grf);
     bool walking(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                        const double * j_pos, const double * j_vel, const double * j_tor, const double * grf);
-    bool standBalance(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
                         const double * j_pos, const double * j_vel, const double * j_tor, const double * grf);
     // =========================== end of private functions ========================================
 

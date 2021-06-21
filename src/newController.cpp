@@ -81,6 +81,13 @@ bool newController::setVelHgtCmdFlag(int velHgtCmdFlag){
     return true;
 }
 
+bool newController::setVelFlag(int velFlag){
+    if (rm.rsm.vel_flag != velFlag){
+        rm.rsm.vel_flag = velFlag;
+    }
+    return true;
+}
+
 bool newController::setVelTrkFlag(int velTrkFlag){
     if (rm.rsm.velTrk_flag != velTrkFlag){
         rm.rsm.velTrk_flag = velTrkFlag;
@@ -131,67 +138,12 @@ bool newController::setStandParams(double Hn_stand, double time_interpolating, d
     return true;
 }
 
-bool newController::update(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                           const double * j_pos, const double * j_vel, const double * j_tor){
-    switch (rm.rsm.behavior_flag){
-    case 0:
-        holdInAir(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 1:
-        tryStandUp(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 2:
-        testInAir(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 3:
-        walking(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 4:
-        tryStop(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 5:
-        testSquat(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 6:
-        standBalance(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    default:
-        std::cout << " the 'behavior_flag' is illegal! " << std::endl;
-    }
-
-    return true;
-}
 
 // simulation
 bool newController::update(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
                                  const double * j_pos, const double * j_vel, const double * j_tor, const double * grf){
 
-
-    switch (rm.rsm.behavior_flag){
-    case 0:
-        holdInAir(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 1:
-        tryStandUp(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor, grf);
-        break;
-    case 2:
-        testInAir(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 3:
-        walking(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor, grf);
-        break;
-    case 4:
-        tryStop(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 5:
-        testSquat(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor);
-        break;
-    case 6:
-        standBalance(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor, grf);
-        break;
-    default:
-        std::cout << " the 'behavior_flag' is illegal! " << std::endl;
-    }
+    walking(timeCS, Vx_cmd, H_flag_cmd, imu_data, j_pos, j_vel, j_tor, grf);
 
     return true;
 }
@@ -264,211 +216,6 @@ bool newController::get_PVTPID_FRRRFLRL_Debug(std::vector<double> &P_PVT, std::v
 }
 
 /// ============================= the private function members ===================================================== ///
-
-bool newController::holdInAir(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                              const double * j_pos, const double * j_vel, const double * j_tor){
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, rm.rs);
-    // Decect Events: TD & LO
-//    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // plan
-    MP->holdInAirPlan(rm.rsm, rm.rs, rm.rd);
-
-    // Task Control
-    TC->holdCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // TODO: Update s_sw_pre, here?
-    rm.rsm.s_sw_pre = rm.rsm.s_sw;
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-    return true;
-}
-
-bool newController::testInAir(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                              const double * j_pos, const double * j_vel, const double * j_tor){
-    return true;
-}
-
-bool newController::tryStandUp(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                             const double * j_pos, const double * j_vel, const double * j_tor){
-
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, rm.rs);
-    // Decect Events: TD & LO
-//    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // plan
-    MP->standUpPlan(rm.rsm, rm.rs, rm.rd);
-
-    // Task Control
-    TC->standUpCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // TODO: Update s_sw_pre, here?
-    rm.rsm.s_sw_pre = rm.rsm.s_sw;
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-
-    return true;
-}
-
-// simulation
-bool newController::tryStandUp(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                const double * j_pos, const double * j_vel, const double * j_tor, const double * grf){
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, grf, rm.rs);
-    // Decect Events: TD & LO
-//    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // plan
-    MP->standUpPlan(rm.rsm, rm.rs, rm.rd);
-
-    // Task Control
-    TC->standUpCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // TODO: Update s_sw_pre, here?
-    rm.rsm.s_sw_pre = rm.rsm.s_sw;
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-
-    return true;
-}
-
-bool newController::walking(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                            const double * j_pos, const double * j_vel, const double * j_tor){
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // ===================================== Core =======================================
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, rm.rs);
-    // Decect Events: TD & LO
-    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // Motion Plan
-    if (rm.rsm.vel_flag == 0){
-        MP->walkTrajectoryPlan(rm.rsm, rm.rs, rm.rd);
-    }else {
-        MP->walkTrajectoryPlan_Ub(rm.rsm, rm.rs, rm.rd);
-    }
-
-    // Task Control
-    if (rm.rsm.tick == 0){
-        TC->setParameters(rm.rsm);
-    }
-    TC->walkCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-    // ===================================== Core =======================================
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-
-    return true;
-}
-
 // simulation
 bool newController::walking(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
                                   const double * j_pos, const double * j_vel, const double * j_tor, const double * grf){
@@ -527,124 +274,6 @@ bool newController::walking(double timeCS, double Vx_cmd, int H_flag_cmd, const 
     return true;
 }
 
-bool newController::testSquat(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                              const double * j_pos, const double * j_vel, const double * j_tor){
-    return true;
-}
-
-bool newController::standBalance(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                  const double * j_pos, const double * j_vel, const double * j_tor){
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // ===================================== Core =======================================
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, rm.rs);
-    // Decect Events: TD & LO
-//    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // Motion Plan
-    if (rm.rsm.vel_flag == 0){
-        MP->standBalancePlan(rm.rsm, rm.rs, rm.rd);
-    }else {
-        MP->standBalancePlan_Ub(rm.rsm, rm.rs, rm.rd);
-    }
-
-    // Task Control
-    if (rm.rsm.tick == 0){
-        TC->setParameters(rm.rsm);
-    }
-    TC->standBalanceCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-    // ===================================== Core =======================================
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-
-    return true;
-}
-
-// simulation
-bool newController::standBalance(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                                const double * j_pos, const double * j_vel, const double * j_tor, const double * grf){
-    rm.rsm.timeCs = timeCS;
-    // Update Time, t
-    if ( rm.rsm.tick > 0){
-        rm.rsm.Time += DT;
-        rm.rsm.t += DT;
-    } else {            // tick <= 0
-        rm.rsm.tick = 0;
-        rm.rsm.Time = 0.0;
-        rm.rsm.t = 0.0;
-    }
-
-    // ===================================== Core =======================================
-
-    // Read Sensor Values
-    SE->readSensor(imu_data, j_pos, j_vel, j_tor, grf, rm.rs);
-    // Decect Events: TD & LO
-//    SE->stateDetecting(rm.rsm, rm.rs);
-    // State Estimating
-    SE->stateEstimating(rm.rsm, rm.rs, Mario);
-
-    // Parse Command
-    MP->parseCmd(Vx_cmd, H_flag_cmd, rm.rsm, rm.rs, rm.rd);
-    // Motion Plan
-    if (rm.rsm.vel_flag == 0){
-        MP->standBalancePlan(rm.rsm, rm.rs, rm.rd);
-    }else {
-        MP->standBalancePlan_Ub(rm.rsm, rm.rs, rm.rd);
-    }
-
-    // Task Control
-    if (rm.rsm.tick == 0){
-        TC->setParameters(rm.rsm);
-    }
-    TC->standBalanceCtrl(rm.rsm, rm.rs, rm.rd, rm.rtr);
-
-    // ===================================== Core =======================================
-
-    // log
-    userOutLog();
-
-    // Reset remark_flag
-    if (rm.rsm.remark_flag == 1){
-        rm.rsm.remark_flag = 0;
-    }
-
-    // Update tick-tack
-    rm.rsm.tick++;
-    if (rm.rsm.tick >= std::numeric_limits<int>::max()-1000){
-        rm.rsm.tick = 1;       // avoid tick out-of range
-    }
-
-    return true;
-}
-
 bool newController::initTimer() {
 
     rm.rsm.tick = 0;
@@ -669,11 +298,6 @@ bool newController::initTimer() {
         rm.rsm.state = 1; // single support
     }
 
-    return true;
-}
-
-bool newController::tryStop(double timeCS, double Vx_cmd, int H_flag_cmd, const double * imu_data,
-                            const double * j_pos, const double * j_vel, const double * j_tor){
     return true;
 }
 
