@@ -1,0 +1,22 @@
+build/
+local/
+doc/
+*.m~
+*.dat
+*.csv
+*.png
+*.PNG
+
+# Qt creator files
+*.user
+*.autosave
+
+# Clion files
+cmake-build-debug/
+.idea/
+
+# vscode files
+.vscode/
+
+# binary file
+wbc_alpha_mario2d

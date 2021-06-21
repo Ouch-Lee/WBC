@@ -1,0 +1,641 @@
+#VRML_SIM R2020a utf8
+WorldInfo {
+  basicTimeStep 1
+  contactProperties [
+    ContactProperties {
+      coulombFriction [
+        0.5
+      ]
+      bounce 0.3
+      bounceVelocity 0.003
+      softERP 0.42
+      softCFM 0.000208
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.9936598000289631 -0.022361119067016082 0.1101824948005434 0.40294045415166363
+  position -2.899406319451797 2.8000667144490765 4.79557890338189
+}
+Background {
+  skyColor [
+    0.827451 0.843137 0.811765
+  ]
+}
+DirectionalLight {
+}
+Floor {
+}
+Robot {
+  translation -4 0.469 0
+  rotation 1 0 0 -1.5707963265
+  children [
+    Shape {
+      appearance PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.5 0.01 0.5
+      }
+    }
+    DEF Platform_Cross SliderJoint {
+      jointParameters JointParameters {
+        axis 1 0 0
+      }
+      device [
+        PositionSensor {
+          name "PlaCro_prismatic_sensor"
+        }
+      ]
+      endPoint DEF Cross Solid {
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0 0 0
+              roughness 1
+              metalness 0
+            }
+            geometry Box {
+              size 0.05 0.02 0.05
+            }
+          }
+          DEF Cross_Pin SliderJoint {
+            jointParameters JointParameters {
+            }
+            device [
+              PositionSensor {
+                name "CroPin_prismatic_sensor"
+              }
+            ]
+            endPoint DEF Pin Solid {
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.937255 0.160784 0.160784
+                    roughness 1
+                    metalness 0
+                  }
+                  geometry Box {
+                    size 0.02 0.12 0.02
+                  }
+                }
+                DEF Pin_Torso HingeJoint {
+                  jointParameters HingeJointParameters {
+                    axis 0 1 0
+                  }
+                  device [
+                    PositionSensor {
+                      name "PinTor_rotational_sensor"
+                    }
+                  ]
+                  endPoint DEF Diamond2d Solid {
+                    children [
+                      GPS {
+                      }
+                      InertialUnit {
+                        name "inertial_unit"
+                      }
+                      Gyro {
+                      }
+                      Group {
+                        children [
+                          Solid {
+                            translation 0.0485 0.04 0
+                            children [
+                              DEF ACTUACTOR Shape {
+                                appearance PBRAppearance {
+                                  baseColor 0.533333 0.541176 0.521569
+                                  roughness 1
+                                  metalness 0
+                                }
+                                geometry Cylinder {
+                                  height 0.07
+                                  radius 0.04
+                                }
+                              }
+                            ]
+                            name "FL_Act_Geometry"
+                          }
+                          Solid {
+                            translation -0.0485 0.04 0
+                            children [
+                              USE ACTUACTOR
+                            ]
+                            name "RL_Act_Geometry"
+                          }
+                          Solid {
+                            translation 0.0485 -0.04 0
+                            children [
+                              USE ACTUACTOR
+                            ]
+                            name "FR_Act_Geometry"
+                          }
+                          Solid {
+                            translation -0.0485 -0.04 0
+                            children [
+                              USE ACTUACTOR
+                            ]
+                            name "RR_Act_Geometry"
+                          }
+                          Solid {
+                            translation 0 0 0.1
+                            children [
+                              Shape {
+                                appearance PBRAppearance {
+                                  baseColor 0.913725 0.72549 0.431373
+                                  roughness 1
+                                  metalness 0
+                                }
+                                geometry Box {
+                                  size 0.22 0.145 0.24
+                                }
+                              }
+                            ]
+                            name "Torso_Box_Geometry"
+                          }
+                          Solid {
+                            translation 0 0 0.24
+                            children [
+                              Shape {
+                                appearance PBRAppearance {
+                                  baseColor 0.913725 0.72549 0.431373
+                                  roughness 1
+                                  metalness 0
+                                }
+                                geometry Cylinder {
+                                  height 0.1
+                                  radius 0.04
+                                }
+                              }
+                            ]
+                            name "PinHole_Geometry"
+                          }
+                        ]
+                      }
+                      DEF FR_hip HingeJoint {
+                        jointParameters HingeJointParameters {
+                          position 2.68
+                          axis 0 1 0
+                          anchor 0.0485 -0.09 0
+                        }
+                        device [
+                          PositionSensor {
+                            name "FR_rotational_sensor"
+                          }
+                          RotationalMotor {
+                            name "FR_rotational_motor"
+                            maxVelocity 100
+                            maxTorque 100
+                          }
+                        ]
+                        endPoint DEF FR_thigh Solid {
+                          translation 0.0841299715633497 -0.09 -0.07162754446715938
+                          rotation 0 1 0 2.68
+                          children [
+                            Shape {
+                              appearance PBRAppearance {
+                                baseColor 0.14902 0.45098 1
+                                roughness 1
+                                metalness 0
+                              }
+                              geometry Box {
+                                size 0.03 0.02 0.16
+                              }
+                            }
+                            DEF FR_knee HingeJoint {
+                              jointParameters HingeJointParameters {
+                                position 0.845181
+                                axis 0 1 0
+                                anchor 0 0 0.08
+                              }
+                              device [
+                                PositionSensor {
+                                  name "FR_knee_rotational_sensor"
+                                }
+                              ]
+                              endPoint DEF FR_shin Solid {
+                                translation 0.11969459764549127 0 0.18617534221505047
+                                rotation 0 1 0 0.845181
+                                children [
+                                  Shape {
+                                    appearance PBRAppearance {
+                                      baseColor 0.0800488 0.051194 0.85333
+                                      roughness 1
+                                      metalness 0
+                                    }
+                                    geometry Box {
+                                      size 0.025 0.02 0.32
+                                    }
+                                  }
+                                  DEF FR_ankle HingeJoint {
+                                    jointParameters HingeJointParameters {
+                                      axis 0 1 0
+                                      anchor 0 0 0.16
+                                    }
+                                    endPoint SolidReference {
+                                      solidName "RR_shin"
+                                    }
+                                  }
+                                ]
+                                name "FR_shin"
+                                physics Physics {
+                                  density -1
+                                  mass 0.21739
+                                  centerOfMass [
+                                    0 0 -0.00868
+                                  ]
+                                  inertiaMatrix [
+                                    0.0001 0.00328763 0.0001
+                                    0 0 0
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                          name "FR_thigh"
+                          physics Physics {
+                            density -1
+                            mass 0.19822
+                            centerOfMass [
+                              3e-05 0 0.00248
+                            ]
+                            inertiaMatrix [
+                              0.0001 0.00103486 0.0001
+                              0 0 0
+                            ]
+                          }
+                        }
+                      }
+                      DEF RR_hip HingeJoint {
+                        jointParameters HingeJointParameters {
+                          position 3.60319
+                          axis 0 1 0
+                          anchor -0.0485 -0.09 0
+                        }
+                        device [
+                          PositionSensor {
+                            name "RR_rotational_sensor"
+                          }
+                          RotationalMotor {
+                            name "RR_rotational_motor"
+                            maxVelocity 100
+                            maxTorque 100
+                          }
+                        ]
+                        endPoint DEF RR_thigh Solid {
+                          translation -0.08413030769816021 -0.09 -0.07162737726131274
+                          rotation 0 0.9999999999999999 0 3.60319
+                          children [
+                            Shape {
+                              appearance PBRAppearance {
+                                baseColor 0.14902 0.45098 1
+                                roughness 1
+                                metalness 0
+                              }
+                              geometry Box {
+                                size 0.03 0.02 0.16
+                              }
+                            }
+                            DEF RR_knee HingeJoint {
+                              jointParameters HingeJointParameters {
+                                position -0.845181
+                                axis 0 1 0
+                                anchor 0 0 0.08
+                              }
+                              device [
+                                PositionSensor {
+                                  name "RR_knee_rotational_sensor"
+                                }
+                              ]
+                              endPoint DEF RR_shin Solid {
+                                translation -0.11969459764549127 0 0.18617534221505047
+                                rotation 0 -1 0 0.845181
+                                children [
+                                  Shape {
+                                    appearance PBRAppearance {
+                                      baseColor 0.0800488 0.051194 0.85333
+                                      roughness 1
+                                      metalness 0
+                                    }
+                                    geometry Box {
+                                      size 0.025 0.02 0.32
+                                    }
+                                  }
+                                  Transform {
+                                    translation 0 0 0.16
+                                    children [
+                                      DEF Foot_R Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.541176 0.886275 0.203922
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Sphere {
+                                          radius 0.029
+                                        }
+                                      }
+                                      TouchSensor {
+                                        name "Right_touch_sensor"
+                                        boundingObject USE Foot_R
+                                        physics Physics {
+                                          density -1
+                                          mass 0.005
+                                        }
+                                        type "force-3d"
+                                        lookupTable [
+                                          -2000 -2000 0
+                                          2000 2000 0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                                name "RR_shin"
+                                physics Physics {
+                                  density -1
+                                  mass 0.26221
+                                  centerOfMass [
+                                    0 0 0.02463
+                                  ]
+                                  inertiaMatrix [
+                                    0.0001 0.0044977 0.0001
+                                    0 0 0
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                          name "RR_thigh"
+                          physics Physics {
+                            density -1
+                            mass 0.22853
+                            centerOfMass [
+                              1e-05 0 0.01189
+                            ]
+                            inertiaMatrix [
+                              0.0001 0.00119302 0.0001
+                              0 0 0
+                            ]
+                          }
+                        }
+                      }
+                      DEF FL_hip HingeJoint {
+                        jointParameters HingeJointParameters {
+                          position 2.68
+                          axis 0 1 0
+                          anchor 0.0485 0.09 0
+                        }
+                        device [
+                          PositionSensor {
+                            name "FL_rotational_sensor"
+                          }
+                          RotationalMotor {
+                            name "FL_rotational_motor"
+                            maxVelocity 100
+                            maxTorque 100
+                          }
+                        ]
+                        endPoint DEF FL_thigh Solid {
+                          translation 0.08412997156334992 0.09 -0.07162754446715981
+                          rotation 0 1 0 2.68
+                          children [
+                            Shape {
+                              appearance PBRAppearance {
+                                baseColor 0.14902 0.45098 1
+                                roughness 1
+                                metalness 0
+                              }
+                              geometry Box {
+                                size 0.03 0.02 0.16
+                              }
+                            }
+                            DEF FL_knee HingeJoint {
+                              jointParameters HingeJointParameters {
+                                position 0.845181
+                                axis 0 1 0
+                                anchor 0 0 0.08
+                              }
+                              device [
+                                PositionSensor {
+                                  name "FL_knee_rotational_sensor"
+                                }
+                              ]
+                              endPoint DEF FL_shin Solid {
+                                translation 0.11969459764549177 0 0.18617534221505092
+                                rotation 0 1 0 0.845181
+                                children [
+                                  DEF FL_ankle HingeJoint {
+                                    jointParameters HingeJointParameters {
+                                      axis 0 1 0
+                                      anchor 0 0 0.16
+                                    }
+                                    endPoint SolidReference {
+                                      solidName "RL_shin"
+                                    }
+                                  }
+                                  Shape {
+                                    appearance PBRAppearance {
+                                      baseColor 0.0800488 0.051194 0.85333
+                                      roughness 1
+                                      metalness 0
+                                    }
+                                    geometry Box {
+                                      size 0.025 0.02 0.32
+                                    }
+                                  }
+                                ]
+                                name "FL_shin"
+                                physics Physics {
+                                  density -1
+                                  mass 0.21739
+                                  centerOfMass [
+                                    0 0 -0.00868
+                                  ]
+                                  inertiaMatrix [
+                                    0.0001 0.00328763 0.0001
+                                    0 0 0
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                          name "FL_thigh"
+                          physics Physics {
+                            density -1
+                            mass 0.19822
+                            centerOfMass [
+                              3e-05 0 0.00248
+                            ]
+                            inertiaMatrix [
+                              0.0001 0.00103486 0.0001
+                              0 0 0
+                            ]
+                          }
+                        }
+                      }
+                      DEF RL_hip HingeJoint {
+                        jointParameters HingeJointParameters {
+                          position 3.60319
+                          axis 0 1 0
+                          anchor -0.0485 0.09 0
+                        }
+                        device [
+                          PositionSensor {
+                            name "RL_rotational_sensor"
+                          }
+                          RotationalMotor {
+                            name "RL_rotational_motor"
+                            maxVelocity 100
+                            maxTorque 100
+                          }
+                        ]
+                        endPoint DEF RL_thigh Solid {
+                          translation -0.08413030769816021 0.09 -0.07162737726131274
+                          rotation 0 0.9999999999999999 0 3.60319
+                          children [
+                            Shape {
+                              appearance PBRAppearance {
+                                baseColor 0.14902 0.45098 1
+                                roughness 1
+                                metalness 0
+                              }
+                              geometry Box {
+                                size 0.03 0.02 0.16
+                              }
+                            }
+                            DEF RL_knee HingeJoint {
+                              jointParameters HingeJointParameters {
+                                position -0.845181
+                                axis 0 1 0
+                                anchor 0 0 0.08
+                              }
+                              device [
+                                PositionSensor {
+                                  name "RL_knee_rotational_sensor"
+                                }
+                              ]
+                              endPoint DEF RL_shin Solid {
+                                translation -0.11969459764549185 0 0.186175342215051
+                                rotation 0 -1 0 0.845181
+                                children [
+                                  Shape {
+                                    appearance PBRAppearance {
+                                      baseColor 0.0800488 0.051194 0.85333
+                                      roughness 1
+                                      metalness 0
+                                    }
+                                    geometry Box {
+                                      size 0.025 0.02 0.32
+                                    }
+                                  }
+                                  Transform {
+                                    translation 0 0 0.16
+                                    children [
+                                      DEF Foot_L Shape {
+                                        appearance PBRAppearance {
+                                          baseColor 0.988235 0.913725 0.309804
+                                          roughness 1
+                                          metalness 0
+                                        }
+                                        geometry Sphere {
+                                          radius 0.029
+                                        }
+                                      }
+                                      TouchSensor {
+                                        name "Left_touch_sensor"
+                                        boundingObject USE Foot_L
+                                        physics Physics {
+                                          density -1
+                                          mass 0.005
+                                        }
+                                        type "force-3d"
+                                        lookupTable [
+                                          -2000 -2000 0
+                                          2000 2000 0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                                name "RL_shin"
+                                physics Physics {
+                                  density -1
+                                  mass 0.26221
+                                  centerOfMass [
+                                    0 0 0.02463
+                                  ]
+                                  inertiaMatrix [
+                                    0.0001 0.0044977 0.0001
+                                    0 0 0
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                          name "RL_thigh"
+                          physics Physics {
+                            density -1
+                            mass 0.22853
+                            centerOfMass [
+                              1e-05 0 0.01189
+                            ]
+                            inertiaMatrix [
+                              0.0001 0.00119302 0.0001
+                              0 0 0
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                    name "Diamond2d"
+                    boundingObject Box {
+                      size 0.1 0.1 0.1
+                    }
+                    physics Physics {
+                      density -1
+                      mass 17.88
+                      centerOfMass [
+                        0 0 0.09938
+                      ]
+                      inertiaMatrix [
+                        0.0001 0.26 0.0001
+                        0 0 0
+                      ]
+                    }
+                  }
+                }
+              ]
+              name "Pin"
+              physics Physics {
+                density -1
+                mass 0.005
+                centerOfMass [
+                  0 0 0
+                ]
+                inertiaMatrix [
+                  0.0001 0.0001 0.0001
+                  0 0 0
+                ]
+              }
+            }
+          }
+        ]
+        name "Cross"
+        physics Physics {
+          density -1
+          mass 0.005
+          centerOfMass [
+            0 0 0
+          ]
+          inertiaMatrix [
+            0.0001 0.0001 0.0001
+            0 0 0
+          ]
+        }
+      }
+    }
+  ]
+  name "Diamod2D_Platform"
+  controller "hipm_vmc"
+}
