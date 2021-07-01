@@ -72,7 +72,12 @@ struct robotStateMachine
      */
     int vel_flag{1};
 
-
+    /**
+     *  qp_flag :
+     *      0: wqp_WBC
+     *      1: hqp_WBC
+     */
+    bool qp_flag{0};
 
     // ========================================= DO NOT MODIFY BELOW ====================================
 

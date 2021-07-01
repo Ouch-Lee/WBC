@@ -66,7 +66,8 @@ bool runWebots(bool inLogFlag){
     // ------------------ for Controller ----------------------------------
     // new controller
     // do not modiy below
-    newController newCtrl(1);
+    int qp_flag = 1;                // 0 : wqpWBC; 1 : hqpWBC
+    newController newCtrl(1, qp_flag);
     newCtrl.setDebugFlag(1); // simulation
     newCtrl.setActuatorModeFlag(0); // actuator in Torque-Mode
     newCtrl.setInitFlag(0);
@@ -74,8 +75,8 @@ bool runWebots(bool inLogFlag){
     // do not modiy up
 
     // Setting. Here, you can modiy
+    newCtrl.setVelFlag(1);       // 0 : CoM; 1 : U
     newCtrl.setVelHgtCmdFlag(1);    // see "robotMessage.h"
-    newCtrl.setVelFlag(1);      // 0: CoM; 1: Upper Body
     // Setting
 
     double Vx_cmd{0.0};

@@ -21,13 +21,14 @@ class newController
 {
 public:
 
-    newController(int massRatioFlag = 1);
+    newController(int massRatioFlag = 1, int qpFlag = 1);
     ~newController();
 
     bool init();    // only call init() one time
     bool setBehaviorFlag(int behaviorFlag);
     bool setVelHgtCmdFlag(int velHgtCmdFlag);
     bool setVelFlag(int velFlag);
+    bool setQpFlag(int qpFlag);
     bool setActuatorModeFlag(int actuatorModeFlag);
     bool setVelTrkFlag(int velTrkFlag);
     bool setStandUpFlag(int standUpFlag);

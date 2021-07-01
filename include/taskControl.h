@@ -24,18 +24,24 @@
 
 class taskControl{
 public:
-    taskControl(RobotDynamics_Mario2D * robotRBDM, bool JcTruncation = false);
+    taskControl(RobotDynamics_Mario2D * robotRBDM, int qpFlag);
     ~taskControl();
 
     bool setParameters(const robotStateMachine & _rsm);
 
     bool walkCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
 
+    bool walkCtrl_wqp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
+    bool walkCtrl_hqp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
+
 
 private:
 
+    int qp_flag_{1};          // 0 : wqp_WBC; 1 : hqp_WBC
+
     RobotDynamics_Mario2D * robot_;
     Wbc * wbc_;
+    Wbc * wbch_;
 
     // fk, ik, jac of leg
     DiaKine::DiamondLeg2D * dl2D;
@@ -117,9 +123,22 @@ private:
     Eigen::VectorXd boundsVec_lb;                                // nV*1
     Eigen::VectorXd boundsVec_ub;                                // nV*1
 
-    // Auxiliary Data
+    // ----------------- Auxiliary Data --------------------
+    // for wqp_WBC
+    std::vector<int> nWSR_w_{100};
+    std::vector<double> cpuTime_w_{10.};
     std::vector<int> intData;
     std::vector<double> doubleData;
+    // for hqp_WBC
+    std::vector<int> nWSR_h_{100,100,100,100};
+    std::vector<double> cpuTime_h_{10.,10.,10.,10.};
+    std::vector<int> dataOptInt;
+    std::vector<double> dataOptDouble;
+    std::vector<int> iterOpt;
+    std::vector<int> successOpt;
+    std::vector<double> costOpt;
+    std::vector<double> timeOpt;
+    // ----------------- Auxiliary Data --------------------
 
     // ------------------------ private Functions -----------------------------------
     // opt get

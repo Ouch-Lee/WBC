@@ -6,7 +6,7 @@
 
 /// ============================== the public function members ===================================================== ///
 
-newController::newController(int massRatioFlag){
+newController::newController(int massRatioFlag, int qpFlag){
     // mass Ratio
     if (massRatioFlag < 0 || massRatioFlag >3){
         std::cout << "WRONG 'massRatioFlag' ! USE 'massRatioFlag == 0' by default NOW !" << std::endl;
@@ -36,7 +36,8 @@ newController::newController(int massRatioFlag){
     Mario = new RobotDynamics_Mario2D(rm.rsm.massRatio_flag, 1);
     SE = new stateEstimation();
     MP = new motionPlan();
-    TC = new taskControl(Mario, rm.rsm.JcTruncation_flag);
+    TC = new taskControl(Mario, qpFlag);
+    rm.rsm.qp_flag = qpFlag;
     TC->setParameters(rm.rsm);
 
     // mass
@@ -84,6 +85,13 @@ bool newController::setVelHgtCmdFlag(int velHgtCmdFlag){
 bool newController::setVelFlag(int velFlag){
     if (rm.rsm.vel_flag != velFlag){
         rm.rsm.vel_flag = velFlag;
+    }
+    return true;
+}
+
+bool newController::setQpFlag(int qpFlag){
+    if (rm.rsm.qp_flag != qpFlag){
+        rm.rsm.qp_flag = qpFlag;
     }
     return true;
 }
