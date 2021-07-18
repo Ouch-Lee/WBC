@@ -107,11 +107,35 @@ taskControl::taskControl(RobotDynamics_Mario2D * robotRBDM, int qpFlag){
     wbch_->setParametersDouble(cpuTime_h_);
     // =============================== create hqp_WBC ======================================
 
+   // =============================== create nsp_WBC ======================================
+
+     wbcn_ =new WqpWbc(nV, robot_);
+
+    wbcn_->addTask(Mario2dCentroidalMoment_ptr, 2);
+    wbcn_->addTask(Mario2dFloatingBasePose_ptr, 3);
+    wbcn_->addTask(Mario2dPointFeetCartPosition_ptr, 1);
+    wbcn_->addTask(Mario2dPointFeetCartForce_ptr, 3);
+    wbcn_->addTask(Mario2dInternalClosedLoop_ptr, 0);
+    // wbcn_->addTask(Mario2dJointTorqueChange_ptr, 0);
+    wbcn_->addTask(Mario2dFeetForceChange_ptr, 3);
+
+    wbcn_->addConstraint(Mario2dDynamicConsistency_ptr, 0);
+    wbcn_->addConstraint(Mario2dFrictionCone_ptr, 1);
+    wbcn_->addConstraint(Mario2dJointTorqueSaturation_ptr, 0);
+    wbcn_->addConstraint(Mario2dKneeSingularity_ptr, 2);
+
+    wbcn_->wbcInit();
+
+    wbcn_->displayWbcInformation();
+    wbcn_->setParametersInt(nWSR_n_);
+    wbcn_->setParametersDouble(cpuTime_n_);
+     // =============================== create nsp_WBC ======================================
 }
 
 taskControl::~taskControl(){
     delete wbc_;
     delete wbch_;
+    delete wbcn_;
 }
 
 bool taskControl::setParameters(const robotStateMachine &_rsm){
@@ -163,12 +187,18 @@ bool taskControl::setParameters(const robotStateMachine &_rsm){
 bool taskControl::walkCtrl(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr){
     if (qp_flag_ == 1){
         walkCtrl_hqp(_rsm, _rs, _rd, _rtr);
-//        std::cout << "hqp" << std::endl;
-    }else{
+//        std::cout << "hqp" << std::endl;300
+    }
+    if (qp_flag_ ==0)
+    {
         walkCtrl_wqp(_rsm, _rs, _rd, _rtr);
 //        std::cout << "wqp" << std::endl;
     }
-
+    if (qp_flag_ ==2)
+    {
+        walkCtrl_nsp(_rsm, _rs, _rd, _rtr);
+          std::cout << "nsp" << std::endl;
+    }
     return true;
 }
 
@@ -709,15 +739,274 @@ bool taskControl::walkCtrl_wqp(const robotStateMachine & _rsm, const robotState 
 
     return true;
 }
+bool taskControl::walkCtrl_nsp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr){
+    // WBC timekeeping calculate
+    auto start = std::chrono::system_clock::now();
+    
+    // ------------------------------ update Model -------------------------------------
+    // RoDy timekeeping calculate
+    auto start_rody = std::chrono::system_clock::now();
+    wbcn_->updateRobotDynamics(_rs.q_, _rs.qDot_);
+    auto end_rody = std::chrono::system_clock::now();
+    auto duration_rody = std::chrono::duration_cast<std::chrono::nanoseconds>(end_rody - start_rody);
+    _rtr.time_RoDy = double(duration_rody.count()) * 1e-6;     // ms
 
+    // TcUpdate timekeeping calculate
+    auto start_TcUpdate = std::chrono::system_clock::now();
+
+     // ------------------------------ Calculate Reference --------------------------------- there are diffirences between wqp and hqp
+
+    if (_rsm.vel_flag == 0){
+        // hgDotRef
+        _rtr.hgDotRef(0) = 0.0;
+        _rtr.hgDotRef.tail(2) = _rs.massTotal*(_rd.cDDot_Com_S_d
+                                               + plan::diag(stdVec_kp_com)*(_rd.c_Com_S_d - _rs.c_Com_S)
+                                               + plan::diag(stdVec_kd_com)*(_rd.cDot_Com_S_d - _rs.cDot_Com_S));
+
+        // qfDDotRef
+        _rtr.qfDDotRef.head(2) = _rd.cDDot_U_S_d
+                                + plan::diag(stdVec_kp_U)*(_rd.c_U_S_d - _rs.c_U_S)
+                                + plan::diag(stdVec_kd_U)*(_rd.cDot_U_S_d - _rs.cDot_U_S);
+        _rtr.qfDDotRef(2) = _rd.pitchDDot_d + kp_pitch*(_rd.pitch_d - _rs.pitch) + kd_pitch*(_rd.pitchDot_d - _rs.pitchDot);
+    }else{
+        // hgDotRef
+        _rtr.hgDotRef(0) = 0.0;
+        _rtr.hgDotRef.tail(2) = _rs.massTotal*(_rd.cDDot_Com_S_d
+                                               + plan::diag(stdVec_kp_com)*(_rd.c_Com_S_d - _rs.c_Com_S)
+                                               + plan::diag(stdVec_kd_com)*(_rd.cDot_Com_S_d - _rs.cDot_Com_S));
+
+        // qfDDotRef
+        _rtr.qfDDotRef.head(2) = _rd.cDDot_U_S_d
+                                + plan::diag(stdVec_kp_U)*(_rd.c_U_S_d - _rs.c_U_S)
+                                + plan::diag(stdVec_kd_U)*(_rd.cDot_U_S_d - _rs.cDot_U_S);
+        _rtr.qfDDotRef(2) = _rd.pitchDDot_d + kp_pitch*(_rd.pitch_d - _rs.pitch) + kd_pitch*(_rd.pitchDot_d - _rs.pitchDot);
+    }
+    // cPfDDotRef
+    if ((_rsm.s >= 0 - EPSILON && _rsm.s <= 0 + EPSILON) || (_rsm.remark_flag == 1)){
+        integral_cPfError_R = Eigen::Vector2d::Zero();
+        integral_cPfError_L = Eigen::Vector2d::Zero();
+    }
+    integral_cPfError_R += plan::diag(stdVec_ki_cPfDDot_R)*(_rd.c_R_S_d - _rs.c_R_S);
+    integral_cPfError_L += plan::diag(stdVec_ki_cPfDDot_L)*(_rd.c_L_S_d - _rs.c_L_S);
+
+    _rtr.cPfDDotRef.head(2) = _rd.cDDot_R_S_d
+                                + plan::diag(stdVec_kp_cPfDDot_R)*(_rd.c_R_S_d - _rs.c_R_S)
+                                + plan::diag(stdVec_kd_cPfDDot_R)*(_rd.cDot_R_S_d - _rs.cDot_R_S)
+                                + integral_cPfError_R;
+    _rtr.cPfDDotRef.tail(2) = _rd.cDDot_L_S_d
+                                + plan::diag(stdVec_kp_cPfDDot_L)*(_rd.c_L_S_d - _rs.c_L_S)
+                                + plan::diag(stdVec_kd_cPfDDot_L)*(_rd.cDot_L_S_d - _rs.cDot_L_S)
+                                + integral_cPfError_L;
+
+    // forcePfRef
+    if (_rsm.forcePfRef_flag == 0){
+        _rtr.forcePfRef = Eigen::Vector4d::Zero();
+    }else{
+        _rtr.forcePfRef << _rd.fc_grf_R_S_ff,
+                            _rd.fc_grf_L_S_ff;
+    }
+
+    // torOptPreRef
+    _rtr.torOptPreRef = _rtr.tauA_opt;
+
+    // fcOptPreRef
+    _rtr.fcOptPreRef = _rtr.fcPf_opt;
+
+        // Weights
+        //it's essential to set the correct weights for each task and constraint
+         if (_rsm.vel_flag == 0){
+        weightVec_CentroidalMoment << 0., 0., 1.;   // omega_y, x, z
+        weightVec_FloatingBasePose << 0., 0., 1.;   // x, z, theta
+    }else{
+        weightVec_CentroidalMoment << 0., 0., 0.;   // omega_y, x, z
+        weightVec_FloatingBasePose << 0., 1., 1.;   // x, z, theta
+    }
+
+    weightVec_PointFeetCartPosition << 1., 1., 1., 1.;
+
+    weightVec_InternalClosedLoop << 1e5, 1e5, 1e5, 1e5;
+
+    weightVec_ForceChange << 2e-4, 2e-4, 2e-4, 2e-4; // 2e-4
+        // Weights
+
+        if (_rsm.state == 1){
+        if(_rsm.stanceLeg == 1){
+            weightVec_PointFeetCartForce << weight_fx_sw, weight_fz_sw, weight_fx_st, weight_fz_st;
+        }else{
+            weightVec_PointFeetCartForce << weight_fx_st, weight_fz_st, weight_fx_sw, weight_fz_sw;
+        }
+    }else{
+        if(_rsm.stanceLeg == 1){
+            // swing
+//            weightVec_PointFeetCartForce(0) = weight_fx_st + (weight_fx_sw - weight_fx_st)*_rsm.ss;
+//            weightVec_PointFeetCartForce(1) = weight_fz_st + (weight_fz_sw - weight_fz_st)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fx_st, weight_fx_sw, _rsm.tt, 1., weightVec_PointFeetCartForce(0));
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fz_st, weight_fz_sw, _rsm.tt, 1., weightVec_PointFeetCartForce(1));
+            // stance
+//            weightVec_PointFeetCartForce(2) = weight_fx_sw + (weight_fx_st - weight_fx_sw)*_rsm.ss;
+//            weightVec_PointFeetCartForce(3) = weight_fz_sw + (weight_fz_st - weight_fz_sw)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fx_sw, weight_fx_st, _rsm.tt, 1., weightVec_PointFeetCartForce(2));
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fz_sw, weight_fz_st, _rsm.tt, 1., weightVec_PointFeetCartForce(3));
+        }else{
+            // swing
+//            weightVec_PointFeetCartForce(2) = weight_fx_st + (weight_fx_sw - weight_fx_st)*_rsm.ss;
+//            weightVec_PointFeetCartForce(3) = weight_fz_st + (weight_fz_sw - weight_fz_st)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fx_st, weight_fx_sw, _rsm.tt, 1., weightVec_PointFeetCartForce(2));
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fz_st, weight_fz_sw, _rsm.tt, 1., weightVec_PointFeetCartForce(3));
+            // stance
+//            weightVec_PointFeetCartForce(0) = weight_fx_sw + (weight_fx_st - weight_fx_sw)*_rsm.ss;
+//            weightVec_PointFeetCartForce(1) = weight_fz_sw + (weight_fz_st - weight_fz_sw)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fx_sw, weight_fx_st, _rsm.tt, 1., weightVec_PointFeetCartForce(0));
+            plan::line_s(0., scale_ss*_rsm.Td, weight_fz_sw, weight_fz_st, _rsm.tt, 1., weightVec_PointFeetCartForce(1));
+        }
+    }
+
+    // ------------------------------ Costs/Objects ------------------------------------
+    wbcn_->updateTask("Mario2dCentroidalMoment", _rtr.hgDotRef, weightVec_CentroidalMoment);
+    wbcn_->updateTask("Mario2dFloatingBasePose", _rtr.qfDDotRef, weightVec_FloatingBasePose);
+    wbcn_->updateTask("Mario2dPointFeetCartPosition", _rtr.cPfDDotRef, weightVec_PointFeetCartPosition);
+    wbcn_->updateTask("Mario2dPointFeetCartForce", _rtr.forcePfRef, weightVec_PointFeetCartForce);
+    wbcn_->updateTask("Mario2dInternalClosedLoop", _rtr.loopRef, weightVec_InternalClosedLoop);
+    wbcn_->updateTask("Mario2dFeetForceChange", _rtr.fcOptPreRef, weightVec_ForceChange);
+
+    // --------------------------------- Constraints -------------------------------------
+    wbcn_->updateConstraint("Mario2dDynamicConsistency");
+    wbcn_->updateConstraint("Mario2dFrictionCone");
+    wbcn_->updateConstraint("Mario2dJointTorqueSaturation");
+    wbcn_->updateConstraint("Mario2dKneeSingularity");
+
+    // -------------------------------- Bounds -----------------------------------------
+    // Bounds foot external forces
+    if (_rsm.state == 1){
+        if(_rsm.stanceLeg == 1){
+            fcLowerBounds << 0., 0., -2*24*GRAVITY, 0.;
+            fcUpperBounds << 0., 0., 2*24*GRAVITY, 2*24*GRAVITY;
+        }else{
+            fcLowerBounds << -2*24*GRAVITY, 0., 0., 0.;
+            fcUpperBounds << 2*24*GRAVITY, 2*24*GRAVITY, 0., 0.;
+        }
+    }else{
+        if(_rsm.stanceLeg == 1){
+            // swing
+            fcLowerBounds(1) = 0.;
+//            fcUpperBounds(1) = 1.5*24*GRAVITY + (0. - 1.5*24*GRAVITY)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, 1.5*24*GRAVITY, 0., _rsm.tt, 1., fcUpperBounds(1));
+            fcLowerBounds(0) = -fcUpperBounds(1);
+            fcUpperBounds(0) = fcUpperBounds(1);
+            // stance
+            fcLowerBounds(3) = 0.;
+//            fcUpperBounds(3) = 0. + (1.5*24*GRAVITY - 0.)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, 0., 1.5*24*GRAVITY, _rsm.tt, 1., fcUpperBounds(3));
+            fcLowerBounds(2) = -fcUpperBounds(3);
+            fcUpperBounds(2) = fcUpperBounds(3);
+        }else{
+            // swing
+            fcLowerBounds(3) = 0.;
+//            fcUpperBounds(3) = 1.5*24*GRAVITY + (0. - 1.5*24*GRAVITY)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, 1.5*24*GRAVITY, 0., _rsm.tt, 1., fcUpperBounds(3));
+            fcLowerBounds(2) = -fcUpperBounds(3);
+            fcUpperBounds(2) = fcUpperBounds(3);
+            // stance
+            fcLowerBounds(1) = 0.;
+//            fcUpperBounds(1) = 0. + (1.5*24*GRAVITY - 0.)*_rsm.ss;
+            plan::line_s(0., scale_ss*_rsm.Td, 0., 1.5*24*GRAVITY, _rsm.tt, 1., fcUpperBounds(1));
+            fcLowerBounds(0) = -fcUpperBounds(1);
+            fcUpperBounds(0) = fcUpperBounds(1);
+        }
+    }
+
+    boundsVec_lb.head(nJg) = -jointQddot_limit_ * Eigen::VectorXd::Ones(nJg);
+    boundsVec_ub.head(nJg) = jointQddot_limit_ * Eigen::VectorXd::Ones(nJg);
+    boundsVec_lb.tail(nFc) = fcLowerBounds;
+    boundsVec_ub.tail(nFc) = fcUpperBounds;
+
+    wbcn_->updateBound(boundsVec_lb, boundsVec_ub);
+
+    // TcUpdate timekeeping calculate
+    auto end_TcUpdate = std::chrono::system_clock::now();
+    auto duration_TcUpdate = std::chrono::duration_cast<std::chrono::nanoseconds>(end_TcUpdate - start_TcUpdate);
+    _rtr.time_TcUpdate = double(duration_TcUpdate.count()) * 1e-6;     // ms
+
+    // ================================= WBC solve =========================================
+
+    // QP timekeeping calculate
+    auto start_QP = std::chrono::system_clock::now();
+    wbcn_->wbcSolve();
+    // QP timekeeping calculate
+    auto end_QP = std::chrono::system_clock::now();
+    auto duration_QP = std::chrono::duration_cast<std::chrono::nanoseconds>(end_QP - start_QP);
+    _rtr.time_QP = double(duration_QP.count()) * 1e-6;     // ms
+
+    std::copy(dataOptInt.begin(), dataOptInt.begin() + 4, iterOpt.begin());
+    std::copy(dataOptInt.begin() + 4 , dataOptInt.begin() + 8, successOpt.begin());
+
+    std::copy(dataOptDouble.begin(), dataOptDouble.begin() + 4, costOpt.begin());
+    std::copy(dataOptDouble.begin() + 4 , dataOptDouble.begin() + 8, timeOpt.begin());
+
+    if (_rtr.simpleStatus == 0){
+        getOptResult(_rtr.qDDot_opt, _rtr.fcPf_opt, _rtr.tauA_opt);
+    }else{
+        std::cout << "QP failed at " << _rsm.timeCs << " (s)." << std::endl;
+    }
+    _rtr.tauA_cmd = _rtr.tauA_opt;
+
+    // optimization result analysis
+    _rtr.hgDot_opt = robot_->AG * _rtr.qDDot_opt + robot_->AGdotQdot;
+    _rtr.qfDDot_opt = robot_->Sf * _rtr.qDDot_opt;
+    _rtr.cPfDDot_opt = robot_->J_c * _rtr.qDDot_opt + robot_->JdotQdot_c;
+    testClosedLoopConsistent(_rtr.qDDot_opt, _rtr.xRzRxLzL_ddot_ClosedLoop);
+
+    // WBC timekeeping calculate
+    auto end = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    _rtr.time_WBC = double(duration.count()) * 1e-6;     // ms
+
+    // integral of qDDot_opt
+    if (_rsm.actuatorMode_flag == 0){
+        stdVec_k_sw_qDot_integral = {0., 0.};
+    }else{
+        stdVec_k_sw_qDot_integral = {0., 0.};
+    }
+    if (_rsm.state == 1){
+        if(_rsm.stanceLeg == 1){
+            if(_rsm.s >= 0 - EPSILON && _rsm.s <= 0 + EPSILON){   // 'LO'
+                _rtr.qDot_A_sw_integral = _rs.qDot_R_A;
+            }
+            _rtr.qDot_A_sw_integral(0) += _rtr.qDDot_opt(3)*DT;
+            _rtr.qDot_A_sw_integral(1) += _rtr.qDDot_opt(5)*DT;
+            _rtr.tauA_cmd.head(2) = _rtr.tauA_opt.head(2) + plan::diag(stdVec_k_sw_qDot_integral)*(_rtr.qDot_A_sw_integral - _rs.qDot_R_A);
+        }else{
+            if(_rsm.s >= 0 - EPSILON && _rsm.s <= 0 + EPSILON){   // 'LO'
+                _rtr.qDot_A_sw_integral = _rs.qDot_L_A;
+            }
+            _rtr.qDot_A_sw_integral(0) += _rtr.qDDot_opt(7)*DT;
+            _rtr.qDot_A_sw_integral(1) += _rtr.qDDot_opt(9)*DT;
+            _rtr.tauA_cmd.tail(2) = _rtr.tauA_opt.tail(2) + plan::diag(stdVec_k_sw_qDot_integral)*(_rtr.qDot_A_sw_integral - _rs.qDot_L_A);
+        }
+    }else {
+        _rtr.tauA_cmd = _rtr.tauA_opt;
+    }
+
+    // calculate output
+    calcJointDes(_rsm, _rs, _rd, _rtr);
+    calcPVTPID(_rs, _rd, _rtr);
+
+    // reset
+    robot_->resetIsPosVelUpdated();
+    return true;
+}
 // ---------------------------- private functions --------------------------------------------
 
 bool taskControl::getOptResult(Eigen::VectorXd &qDDot_opt, Eigen::VectorXd &fcPf_opt, Eigen::VectorXd &tauA_opt){
     Eigen::VectorXd x_opt(nV);
     if (qp_flag_ == 1){
         wbch_->getResultOpt(x_opt);
-    }else {
+    }
+    if (qp_flag_==0) {
         wbc_->getResultOpt(x_opt);
+    }
+    if (qp_flag_==2){
+        wbcn_->getResultOpt(x_opt);
     }
 
     qDDot_opt = x_opt.head(nJg);
