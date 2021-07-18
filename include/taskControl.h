@@ -17,9 +17,11 @@
 #include "DiamondKinematics.h"
 
 #include "wqpWbc.h"
+#include "hqpWbc.h"
 #include "taskDefinition_Mario2D.h"
 #include "constraintDefinition_Mario2D.h"
 #include "robotDynamics_Mario2D.h"
+
 
 
 class taskControl{
@@ -33,15 +35,17 @@ public:
 
     bool walkCtrl_wqp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
     bool walkCtrl_hqp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
+    bool walkCtrl_nsp(const robotStateMachine & _rsm, const robotState & _rs, const robotDesired & _rd, robotTaskRef & _rtr);
 
 
 private:
 
-    int qp_flag_{1};          // 0 : wqp_WBC; 1 : hqp_WBC
+    int qp_flag_{1};          // 0 : wqp_WBC; 1 : hqp_WBC; 2:nsp_WBC
 
     RobotDynamics_Mario2D * robot_;
     Wbc * wbc_;
     Wbc * wbch_;
+    Wbc * wbcn_;
 
     // fk, ik, jac of leg
     DiaKine::DiamondLeg2D * dl2D;
@@ -138,6 +142,10 @@ private:
     std::vector<int> successOpt;
     std::vector<double> costOpt;
     std::vector<double> timeOpt;
+    // for nsp_WBC
+    std::vector<int> nWSR_n_{100,100,100,100};
+    std::vector<double> cpuTime_n_{10.,10.,10.,10.};
+
     // ----------------- Auxiliary Data --------------------
 
     // ------------------------ private Functions -----------------------------------
