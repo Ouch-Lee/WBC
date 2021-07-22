@@ -11,7 +11,9 @@
 #define WBC_WQPWBCSOLVER_H
 
 #include <qpOASES.hpp>
-
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/SVD>
+#include <eigen3/Eigen/Core>
 #include "wbc.h"
 
 /**
@@ -115,6 +117,45 @@ private:
     /// b
     Eigen::VectorXd tgtVec_All;                                     ///< nO*1
 
+    // 7 basic Jacobian for each task
+    Eigen::MatrixXd J1;
+    Eigen::MatrixXd J2;
+    Eigen::MatrixXd J3;
+    Eigen::MatrixXd J4;
+    Eigen::MatrixXd J5;
+    Eigen::MatrixXd J6;
+    Eigen::MatrixXd J7;
+    
+    // 4 synthetic Jacobian for 4 priority level
+    Eigen::MatrixXd J_level1;
+    Eigen::MatrixXd J_level2;
+    Eigen::MatrixXd J_level3;
+    Eigen::MatrixXd J_level4;
+
+    // 3 Pinv Jacobian 
+    Eigen::MatrixXd J_level1_pinv;
+    Eigen::MatrixXd J_level2_pinv;
+    Eigen::MatrixXd J_level3_pinv;
+    Eigen::MatrixXd J_level4_pinv;
+
+    // 7 manipulation vatriable R, as well as b
+    Eigen::VectorXd R1;
+    Eigen::VectorXd R2;
+    Eigen::VectorXd R3;
+    Eigen::VectorXd R4;
+    Eigen::VectorXd R5;
+    Eigen::VectorXd R6;
+    Eigen::VectorXd R7;
+
+    // 4 systhetic vatiables for 4  priority level
+    Eigen::VectorXd R_level1;
+    Eigen::VectorXd R_level2;
+    Eigen::VectorXd R_level3;
+    Eigen::VectorXd R_level4;
+
+    //calculate the X as the desire Joint paramas
+    Eigen::VectorXd X;
+    
     // ------------------------ Bounds & Constraints -----------------------------------
 
     /// lb,ub
@@ -136,11 +177,15 @@ private:
      * @return
      */
     bool qpUpdate();
-    bool calcHessianGradient();
+    bool calcJAndB();    // this function is aimed to calculate Jacobian(A) and manipulation variable(b) for each task
+    bool calc_X();          //this function is aimed to calculate X_desire according to the equations provide by Wang
+    bool calcHessianGradient();  //calculate H and g based on the former paramas
     bool calcConstraintCoefficient();
     bool qpSolve();
     bool qpReset();
-
+    Eigen::MatrixXd pinv_eigen_based(Eigen::MatrixXd & origin, float er) ;   //a function to calculate pseudo-inverse of a Matrix ,er stands for error; but when row=col it's useless
+    Eigen::MatrixXd pinv_Matirx(Eigen::MatrixXd & origin);   // suit for all kind matrix to calculate pseudo-inverse
+    // Eigen::VectorXd calcaTask_X( int levels,);
     bool getPrimalOpt(Eigen::VectorXd & primalOpt);
     bool getDualOpt(Eigen::VectorXd & dualOpt);
 
