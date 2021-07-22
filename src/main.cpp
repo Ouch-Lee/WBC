@@ -24,8 +24,7 @@ bool runWebots(bool inLogFlag);
 /*
  * The arguments of the main() can be specified by the "controllerArgs" field of the Robot node.
  */
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
     bool inLog_flag = false;
     runWebots(inLog_flag);
@@ -33,20 +32,20 @@ int main(int argc, char **argv)
     return 0;
 }
 
-bool runWebots(bool inLogFlag)
-{
+
+bool runWebots(bool inLogFlag){
 
     int simCnt = 0;
     double simTime = 0;
 
-    const int goStandCnt = 0;                            // 200
-    const double goStandTime = goStandCnt * SAMPLE_TIME; //second
+    const int goStandCnt = 0;         // 200
+    const double goStandTime = goStandCnt * SAMPLE_TIME;	//second
 
-    const int simStopCnt = goStandCnt + 30000;
-    const double simStopTime = simStopCnt * SAMPLE_TIME; //second
+    const int simStopCnt  = goStandCnt + 30000;
+    const double simStopTime = simStopCnt * SAMPLE_TIME;    //second
 
     webotsRobot webotsDia2D;
-    webotsDia2D.initWebots(); // Initialize Webots
+    webotsDia2D.initWebots();   // Initialize Webots
     webotState bipedState;
     webotDesired bipedDesired;
 
@@ -67,17 +66,17 @@ bool runWebots(bool inLogFlag)
     // ------------------ for Controller ----------------------------------
     // new controller
     // do not modiy below
-    int qp_flag = 1; // 0 : wqpWBC; 1 : hqpWBC
+    int qp_flag = 0;                // 0 : wqpWBC; 1 : hqpWBC ; 2:nspWBC
     newController newCtrl(1, qp_flag);
-    newCtrl.setDebugFlag(1);        // simulation
+    newCtrl.setDebugFlag(1); // simulation
     newCtrl.setActuatorModeFlag(0); // actuator in Torque-Mode
     newCtrl.setInitFlag(0);
     newCtrl.setBehaviorFlag(3); // walking
     // do not modiy up
 
     // Setting. Here, you can modiy
-    newCtrl.setVelFlag(1);       // 0 : CoM; 1 : U
-    newCtrl.setVelHgtCmdFlag(1); // see "robotMessage.h"
+    newCtrl.setVelFlag(1);       // 0 : CoM; 1 : U   upper is  easier to observe
+    newCtrl.setVelHgtCmdFlag(1);    // see "robotMessage.h"
     // Setting
 
     double Vx_cmd{0.0};
@@ -92,71 +91,60 @@ bool runWebots(bool inLogFlag)
 
     // for outLog.csv
     std::ofstream outLog_csv;
-    std::string file_out_log_csv = "/home/wys/Webots/Diamond2D/controllers/wbc_mario2d_SI_new/local/outLog.csv";
-    outLog_csv.open(file_out_log_csv);
+    std::string file_out_log_csv = "/home/neocheer/webots/Summer_Internship/Webots/Diamond2D/controllers/wbc_mario2d_SI/local/prior/original.csv";
+    outLog_csv.open( file_out_log_csv );
 
     // for inLog.csv
     std::ofstream inLog_dat;
-    if (inLogFlag)
-    {
-        std::string file_in_log_dat = "/home/wys/Webots/Diamond2D/controllers/wbc_mario2d_SI_new/local/inLog.dat";
-        inLog_dat.open(file_in_log_dat);
+    if (inLogFlag){
+        std::string file_in_log_dat = "/home/neocheer/webots/Summer_Internship/Webots/Diamond2D/controllers/wbc_mario2d_SI/local/inLog.dat";
+        inLog_dat.open( file_in_log_dat );
     }
 
     // Realtime simulation starts & looping
     while (webotsDia2D.robot->step(TIME_STEP) != -1)
     {
         simTime = webotsDia2D.robot->getTime();
-        std::cout << "current time: " << simTime << " (s)" << std::endl;
+        // std::cout << "current time: " << simTime << " (s)" << std::endl;
 
         // for PUSH RECOVERY setting
-        //        double delta_t = 0.01;
-        //        double force_push = 900;
-        //        // Apply external force to upper-body
-        //        if (simTime - goStandTime >= 5 && simTime - goStandTime < 5 + delta_t){
-        //            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
-        //        }else if (simTime - goStandTime >= 10 && simTime - goStandTime < 10 + delta_t){
-        //            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
-        //        }else if (simTime - goStandTime >= 15 && simTime - goStandTime < 15 + delta_t){
-        //            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
-        //        }else if (simTime - goStandTime >= 20 && simTime - goStandTime < 20 + delta_t){
-        //            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
-        //        }else if (simTime - goStandTime >= 25 && simTime - goStandTime < 25 + delta_t){
-        //            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
-        //        }
+//        double delta_t = 0.01;
+//        double force_push = 900;
+//        // Apply external force to upper-body
+//        if (simTime - goStandTime >= 5 && simTime - goStandTime < 5 + delta_t){
+//            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
+//        }else if (simTime - goStandTime >= 10 && simTime - goStandTime < 10 + delta_t){
+//            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
+//        }else if (simTime - goStandTime >= 15 && simTime - goStandTime < 15 + delta_t){
+//            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
+//        }else if (simTime - goStandTime >= 20 && simTime - goStandTime < 20 + delta_t){
+//            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
+//        }else if (simTime - goStandTime >= 25 && simTime - goStandTime < 25 + delta_t){
+//            webotsDia2D.applyUpperBodyForce(Vec3<double>(force_push, 0., 0.));
+//        }
 
         // Read data from Webots
         webotsDia2D.readData(simTime, bipedState);
         // data transform
-        imu_data[1] = bipedState.torsoRpyAct(1, 0);
-        imu_data[7] = bipedState.torsoAnvAct(1, 0);
-        j_pos[0] = bipedState.jointPosAct(0, 0);
-        j_pos[1] = bipedState.jointPosAct(1, 0);
-        j_pos[2] = bipedState.jointPosAct(2, 0);
-        j_pos[3] = bipedState.jointPosAct(3, 0);
-        j_vel[0] = bipedState.jointVelAct(0, 0);
-        j_vel[1] = bipedState.jointVelAct(1, 0);
-        j_vel[2] = bipedState.jointVelAct(2, 0);
-        j_vel[3] = bipedState.jointVelAct(3, 0);
-        grf[0] = bipedState.footGrfAct(0, 0);
-        grf[1] = bipedState.footGrfAct(1, 0);
-        grf[2] = bipedState.footGrfAct(2, 0);
-        grf[3] = bipedState.footGrfAct(3, 0);
-        grf[4] = bipedState.footGrfAct(4, 0);
-        grf[5] = bipedState.footGrfAct(5, 0);
+        imu_data[1] = bipedState.torsoRpyAct(1,0); imu_data[7] = bipedState.torsoAnvAct(1,0);
+        j_pos[0] = bipedState.jointPosAct(0,0); j_pos[1] = bipedState.jointPosAct(1,0);
+        j_pos[2] = bipedState.jointPosAct(2,0); j_pos[3] = bipedState.jointPosAct(3,0);
+        j_vel[0] = bipedState.jointVelAct(0,0); j_vel[1] = bipedState.jointVelAct(1,0);
+        j_vel[2] = bipedState.jointVelAct(2,0); j_vel[3] = bipedState.jointVelAct(3,0);
+        grf[0] = bipedState.footGrfAct(0,0); grf[1] = bipedState.footGrfAct(1,0); grf[2] = bipedState.footGrfAct(2,0);
+        grf[3] = bipedState.footGrfAct(3,0); grf[4] = bipedState.footGrfAct(4,0); grf[5] = bipedState.footGrfAct(5,0);
 
         // Send data to Webots
         //*****************************************************//
-        if (simCnt < goStandCnt) // Go to stand pos
+        if (simCnt < goStandCnt)    // Go to stand pos
         {
             standPosCmd << 2.679999820129237, 3.603185487050349, 2.679999820129237, 3.603185487050349;
             webotsDia2D.sendPosCammand(standPosCmd);
             // do not record
         }
-        else // your control loops
+        else    // your control loops
         {
-            if (inLogFlag)
-            {
+            if (inLogFlag){
                 writeDouble2DAT(simTime - goStandTime, inLog_dat);
                 writeDouble2DAT(Vx_cmd, inLog_dat);
                 writeDouble2DAT(static_cast<double>(Hb_flag_cmd), inLog_dat);
@@ -171,8 +159,7 @@ bool runWebots(bool inLogFlag)
             // controller timekeeping calculate
             auto start_chrono = std::chrono::system_clock::now();
 
-            if (simCnt - goStandCnt == 0)
-            {
+            if (simCnt - goStandCnt == 0){
                 Vx_cmd = 0.0;
             }
 
@@ -188,14 +175,17 @@ bool runWebots(bool inLogFlag)
             bipedDesired.jointIpidDes << I_PID[0], I_PID[1], I_PID[2], I_PID[3];
             bipedDesired.jointDpidDes << D_PID[0], D_PID[1], D_PID[2], D_PID[3];
 
-            jointTorCmd = bipedDesired.jointTorDes + bipedDesired.jointPpidDes.asDiagonal() * (bipedDesired.jointPosDes - bipedState.jointPosAct) + bipedDesired.jointDpidDes.asDiagonal() * (bipedDesired.jointVelDes - bipedState.jointVelAct);
+            jointTorCmd = bipedDesired.jointTorDes
+                            + bipedDesired.jointPpidDes.asDiagonal()*(bipedDesired.jointPosDes - bipedState.jointPosAct)
+                            + bipedDesired.jointDpidDes.asDiagonal()*(bipedDesired.jointVelDes - bipedState.jointVelAct);
             webotsDia2D.sendTorCammand(jointTorCmd);
+
 
             // controller timekeeping calculate
             auto end_chrono = std::chrono::system_clock::now();
             auto duration_chrono = std::chrono::duration_cast<std::chrono::nanoseconds>(end_chrono - start_chrono);
             timeCtrl = double(duration_chrono.count()) * 1e-6;
-            //        std::cout << "Controller Timekeeping: " << timeCtrl << " (ms)" << std::endl;
+    //        std::cout << "Controller Timekeeping: " << timeCtrl << " (ms)" << std::endl;
             timeCtrl_all += timeCtrl;
             timeCtrl_max = std::max(timeCtrl_max, timeCtrl);
 
@@ -211,8 +201,7 @@ bool runWebots(bool inLogFlag)
         //*****************************************************//
 
         // Stop simulation at specified time
-        if (simTime > simStopTime)
-        {
+        if (simTime > simStopTime){
             break;
         }
         simCnt++;
@@ -228,9 +217,8 @@ bool runWebots(bool inLogFlag)
     clock_gettime(CLOCK_REALTIME, &end);
     // controller timekeeping
     double timeCtrl_average{0.0};
-    if (countCtrl != 0)
-    {
-        timeCtrl_average = timeCtrl_all / countCtrl;
+    if (countCtrl != 0){
+        timeCtrl_average = timeCtrl_all/countCtrl;
     }
 
     std::cout << "Program ended." << std::endl;
